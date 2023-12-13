@@ -59,13 +59,14 @@ class DQN(nn.Module):
 
 
 class DQNAgent(RL_Agent):
-    def __init__(self):
+    def __init__(self, actions):
         self.config = cfg.DEFAULT_DEEP_Q_CONFIG
         self.running_stats = cfg.DEFAULT_RUNNING_STATS
+        self.actions = actions
     
     def initialize_with_config(self):
-        self.policy_net = DQN(len(self.config["STATE_ITEMS"]), self.config["FC1_OUT"], self.config["FC2_OUT"], len(self.config["ACTIONS"]))
-        self.target_net = DQN(len(self.config["STATE_ITEMS"]), self.config["FC1_OUT"], self.config["FC2_OUT"], len(self.config["ACTIONS"]))
+        self.policy_net = DQN(len(self.config["STATE_ITEMS"]), self.config["FC1_OUT"], self.config["FC2_OUT"], len(self.actions))
+        self.target_net = DQN(len(self.config["STATE_ITEMS"]), self.config["FC1_OUT"], self.config["FC2_OUT"], len(self.actions))
         self.optimizer = optim.Adam(self.policy_net.parameters(), lr=self.config["LEARNING_RATE"])
         self.replay_buffer = ReplayBuffer(self.config["BATCH_SIZE"], self.config["REPLAY_BUFFER_CAPACITY"])
 
@@ -79,48 +80,46 @@ class DQNAgent(RL_Agent):
     def filter_state(self, core_state, should_print_state=False):
         if core_state == None:
             return None
-        if (should_print_state):
-            print_state = "Normalized state: "
-            for item in self.config["STATE_ITEMS"]:
-                print_state += item + ": " + "{:.3f}".format(core_state[item]) + ", "
-            print(print_state[:-2])
-        return [core_state[item] for item in self.config["STATE_ITEMS"]]
+        ret = list(core_state.values())
+        return ret
+        # if (should_print_state):
+        #     for item in self.config["STATE_ITEMS"]:
+        #         print_state += item + ": " + "{:.3f}".format(core_state[item]) + ", "
+        #     print(print_state[:-2])
+        # return [core_state[item] for item in self.config["STATE_ITEMS"]]
 
     def act(self, raw_state):
-        active_cores, inactive_cores = self.guess_active_cores(raw_state)
-
         dvfs = {}
 
-        for core in inactive_cores:
-            # Lowest freq
-            dvfs[str(core)] = self.config["ACTIONS"][0]
-
-        for core in active_cores:
-            last_normalized_state = self.filter_state(self.get_normalized_state_of_core(core))
+        for core in [0, 4]:
+            last_state = self.get_state_of_core(core)
+            last_state = self.filter_state(last_state)
             last_action = self.get_action_of_core(core)
+            
             self.update_state_of_core(core, raw_state)
-            current_normalized_state = self.filter_state(self.get_normalized_state_of_core(core), True)
+            current_state = self.get_state_of_core(core)
+            current_state = self.filter_state(current_state, True)
             # We calculate reward also in test to have a metric
             has_reward = False
-            if last_action != None and last_normalized_state != None:
+            if last_action != None and last_state != None:
                 reward = self.calculate_reward(core)
                 has_reward = True
             if self.train:
                 # If we are not acting on the core for the first time
                 if has_reward:
-                    self.replay_buffer.add(last_normalized_state, last_action, reward, current_normalized_state)
+                    self.replay_buffer.add(last_state, last_action, reward, current_state)
                 print("Buffer size: {0}".format(self.replay_buffer.buffer_size()))
                 if self.replay_buffer.buffer_size() >= self.config["BATCH_SIZE"]:
                     self.learn()
 
             else:
-                self.update_state_of_core(core, raw_state)
-                current_normalized_state = self.filter_state(self.get_normalized_state_of_core(core))
+                last_state = self.get_state_of_core(core)
+                current_state = self.filter_state(last_state)
 
-            action = self.get_action(current_normalized_state, epsilon_greedy=self.train)
+            action = self.get_action(current_state, epsilon_greedy=self.train)
             self.update_action_of_core(core, action)
-            dvfs[str(core)] = self.config["ACTIONS"][action]
-            print("Chosen action: {0} MHz".format(dvfs[str(core)]))
+            dvfs[core] = self.actions[action]
+            print("Chosen action: {0} MHz".format(dvfs[core]))
 
         return dvfs
 
@@ -128,9 +127,9 @@ class DQNAgent(RL_Agent):
         state = self.get_state_of_core(core_index)
 
         # Normalize temperature to constraint
-        normalized_temperature = (state["temperature"] - self.config["TEMPERATURE_CONSTRAINT"])
+        normalized_temperature = (state["CPU_TEMP"] - self.config["TEMPERATURE_CONSTRAINT"])
 
-        reward_0 = self.config["K_Frequency"] * state["frequency"]
+        reward_0 = self.config["K_Frequency"] * state[f"CPU-Freq-{core_index}"]
         reward_1 = (-1) * self.config["K_Temperature"] * max(0, normalized_temperature)
         reward = reward_0 + reward_1
 
@@ -164,7 +163,7 @@ class DQNAgent(RL_Agent):
         print("Effective epsilon: {0}".format(effective_epsilon))
         if epsilon_greedy and random.random() < effective_epsilon:
             print("Choosing random action")
-            action = random.randrange(0, len(self.config["ACTIONS"]))
+            action = random.randrange(0, len(self.actions))
         else:
             print("Choosing best action")
             state = torch.FloatTensor(state)

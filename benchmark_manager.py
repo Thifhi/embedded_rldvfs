@@ -22,12 +22,16 @@ class BenchmarkManager:
                 p = self.run_benchmark(suite, benchmark)
                 self.running_processes.append((suite, benchmark, p))
     
+    def poll_running(self):
+        for suite, benchmark, p in self.running_processes:
+            if p.poll() is None:
+                return True
+        return False
+    
     def block_until_all_exit(self):
         for suite, benchmark, p in self.running_processes:
             stdout, stderr = p.communicate()
             if p.returncode == 0:
-                # print("Output:")
-                # print(stdout)
                 print(f"Exited: {suite}-{benchmark}")
             else:
                 print("Error in {suite}-{benchmark}:")

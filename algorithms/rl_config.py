@@ -7,7 +7,7 @@ TABLE_Q_ALG = "Table-Q"
 # Used by Trainer
 AGENT_NAME = "dq-test1"
 ALGORITHM = DEEP_Q_ALG
-TEST_EPOCH = 4
+TEST_EPOCH = 1000
 TRAIN_UNTIL = 48
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -27,8 +27,8 @@ Q_TABLE_PATH = "q_table.npy"
 
 DEFAULT_DEEP_Q_CONFIG = OrderedDict([
     # Network Config
-    ("STATE_ITEMS", ["cpi", "temperature", "frequency"]),
-    ("ACTIONS", [1000 + i * 250 for i in range(13)]),
+    ("STATE_ITEMS", ["*" for i in range(8)]), # Placeholder
+    # ("ACTIONS", [0.1 * i for i in range(11)]),
 
     ("LEARNING_RATE", 0.0005),
     ("GAMMA", 0.9),
