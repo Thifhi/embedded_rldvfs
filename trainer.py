@@ -25,7 +25,9 @@ class PeriodicSleeper(threading.Thread):
             time.sleep(delta)
     
     def run(self):
-        while self.task_function():
+        while True:
+            if not self.task_function():
+                break
             self.sleep()
 
 def read_config():
@@ -43,14 +45,12 @@ def main():
     agent_folder = os.path.join("agents", "testing_agent")
 
     mgr = BenchmarkManager(cfg)
-    mgr.run_benchmarks()
     
     dvfs_controller = DVFSController([0, 4])
     temperature_reader = TemperatureReader()
     
     agent = DQNAgent(dvfs_controller.available_cpu_frequencies)
     agent.initialize_with_config()
-    agent.start_run(True)
 
     def act_with_info():
         action = agent.act(read_state(dvfs_controller, temperature_reader))
@@ -59,6 +59,8 @@ def main():
         return mgr.poll_running()
 
     for i in range(10):
+        mgr.run_benchmarks()
+        agent.start_run(True)
         run_count = agent.get_run_count()
         threads = PeriodicSleeper(act_with_info, 1e-2)
         threads.join()
