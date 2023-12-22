@@ -108,7 +108,7 @@ class DQNAgent(RL_Agent):
                 # If we are not acting on the core for the first time
                 if has_reward:
                     self.replay_buffer.add(last_state, last_action, reward, current_state)
-                print("Buffer size: {0}".format(self.replay_buffer.buffer_size()))
+                # print("Buffer size: {0}".format(self.replay_buffer.buffer_size()))
                 if self.replay_buffer.buffer_size() >= self.config["BATCH_SIZE"]:
                     self.learn()
 
@@ -119,7 +119,7 @@ class DQNAgent(RL_Agent):
             action = self.get_action(current_state, epsilon_greedy=self.train)
             self.update_action_of_core(core, action)
             dvfs[core] = self.actions[action]
-            print("Chosen action: {0} MHz".format(dvfs[core]))
+            # print("Chosen action: {0} MHz".format(dvfs[core]))
 
         return dvfs
 
@@ -133,8 +133,8 @@ class DQNAgent(RL_Agent):
         reward_1 = (-1) * self.config["K_Temperature"] * max(0, normalized_temperature)
         reward = reward_0 + reward_1
 
-        print("Reward... (from frequency: {:.3f}, from temperature: {:.3f})".format(reward_0, reward_1))
-        print("Final reward: {:.3f}".format(reward))
+        # print("Reward... (from frequency: {:.3f}, from temperature: {:.3f})".format(reward_0, reward_1))
+        # print("Final reward: {:.3f}".format(reward))
 
         self.running_stats["REWARDS"]["TRAIN" if self.train else "TEST"][self.running_stats["RUN_COUNTER"]].append(reward)
 
@@ -157,15 +157,17 @@ class DQNAgent(RL_Agent):
         loss.backward()
         self.optimizer.step()
 
+        self.running_stats["Q_LOSSES"][self.running_stats["RUN_COUNTER"]].append(loss.item())
+
     
     def get_action(self, state, epsilon_greedy):
         effective_epsilon =  max(self.config["EPSILON_MIN"], self.config["EPSILON"] - (self.config["EPSILON_DECAY_PER_RUN"] * self.running_stats["RUN_COUNTER"]))
-        print("Effective epsilon: {0}".format(effective_epsilon))
+        # print("Effective epsilon: {0}".format(effective_epsilon))
         if epsilon_greedy and random.random() < effective_epsilon:
-            print("Choosing random action")
+            # print("Choosing random action")
             action = random.randrange(0, len(self.actions))
         else:
-            print("Choosing best action")
+            # print("Choosing best action")
             state = torch.FloatTensor(state)
             with torch.no_grad():
                 prediction = self.policy_net(state)
@@ -176,9 +178,11 @@ class DQNAgent(RL_Agent):
         return self.running_stats["RUN_COUNTER"]
 
     def start_run(self, train):
+        # print(self.running_stats["RUN_COUNTER"])
         if train:
             self.set_train()
             self.running_stats["REWARDS"]["TRAIN"][self.running_stats["RUN_COUNTER"]] = []
+            self.running_stats["Q_LOSSES"][self.running_stats["RUN_COUNTER"]] = []
         else:
             self.set_test()
             self.running_stats["REWARDS"]["TEST"][self.running_stats["RUN_COUNTER"]] = []
