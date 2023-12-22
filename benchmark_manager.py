@@ -17,6 +17,9 @@ class BenchmarkManager:
         return process
 
     def run_benchmarks(self):
+        if self.poll_running():
+            print("BENCHMARKS WERE STILL RUNNING")
+        self.running_processes = []
         for suite, benchmarks in self.cfg["benchmarks"].items():
             for benchmark in benchmarks:
                 p = self.run_benchmark(suite, benchmark)
