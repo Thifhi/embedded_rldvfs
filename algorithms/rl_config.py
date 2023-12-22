@@ -75,5 +75,6 @@ DEFAULT_TABLE_Q_CONFIG = OrderedDict([
 DEFAULT_RUNNING_STATS = OrderedDict([
     ("RUN_COUNTER", 0),
     ("LEARN_COUNTER", 0),
+    ("Q_LOSSES", OrderedDict()),
     ("REWARDS", OrderedDict([("TRAIN", OrderedDict()), ("TEST", OrderedDict())]))
 ])
