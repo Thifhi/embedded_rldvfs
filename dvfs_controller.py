@@ -50,7 +50,7 @@ class DVFSController:
     def read_all_cpu_frequencies(self):
         all_freqs = {}
         for cpu in self.cpus:
-            all_freqs[f"CPU-Freq-{cpu}"] = self.read_cpu_frequency(cpu)
+            all_freqs[f"CPU-FREQ-{cpu}"] = self.read_cpu_frequency(cpu)
         return all_freqs
 
     def set_all_cpu_frequencies(self, dvfs):

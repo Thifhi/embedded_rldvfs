@@ -27,8 +27,7 @@ Q_TABLE_PATH = "q_table.npy"
 
 DEFAULT_DEEP_Q_CONFIG = OrderedDict([
     # Network Config
-    ("STATE_ITEMS", ["*" for i in range(8)]), # Placeholder
-    # ("ACTIONS", [0.1 * i for i in range(11)]),
+    ("STATE_ITEMS", ["*" for i in range(8)]), # Placeholder, one for each state component needed for calculation of DQN layers
 
     ("LEARNING_RATE", 0.0005),
     ("GAMMA", 0.9),
@@ -45,30 +44,8 @@ DEFAULT_DEEP_Q_CONFIG = OrderedDict([
     ("TARGET_UPDATE_FREQUENCY", 1000),
 
     # Reward Constant
-    ("K_Frequency", 0.001),
-    ("K_Temperature", 5),
-    ("TEMPERATURE_CONSTRAINT", 70)
-])
-
-DEFAULT_TABLE_Q_CONFIG = OrderedDict([
-    # Network Config
-    ("STATE_ITEMS", ["cpi", "temperature", "max_neighbor_temp", "average_neighbor_temp", "frequency", "power"]),
-    ("ACTIONS", [1000 + i * 250 for i in range(13)]),
-
-    ("CPI_STEPS", [0 + i * 0.2 for i in range(10)]),
-    ("TEMPERATURE_STEPS", [62 + i for i in range(18)]),
-    ("FREQUENCY_STEPS", [1000 + i * 250 for i in range(13)]),
-    ("POWER_STEPS", [1 + 0.2 * i for i in range(16)]),
-
-    ("LEARNING_RATE", 0.1),
-    ("GAMMA", 0.9),
-    ("EPSILON", 1.0),
-    ("EPSILON_MIN", 0.01),
-    ("EPSILON_DECAY_PER_RUN", 0.04),
-
-    # Reward Constant
-    ("K_Frequency", 0.001),
-    ("K_Temperature", 5),
+    ("K_Frequency", 1e-6),
+    ("K_Temperature", 0),
     ("TEMPERATURE_CONSTRAINT", 70)
 ])
 
@@ -77,4 +54,11 @@ DEFAULT_RUNNING_STATS = OrderedDict([
     ("LEARN_COUNTER", 0),
     ("Q_LOSSES", OrderedDict()),
     ("REWARDS", OrderedDict([("TRAIN", OrderedDict()), ("TEST", OrderedDict())]))
+])
+
+NORMALIZER_COEFFICIENTS = OrderedDict([
+    ("FREQ_MEAN", 1e6 * 2),
+    ("FREQ_NORMALIZER_COEFFICIENT", 1e-6),
+    ("TEMP_MEAN", 50),
+    ("TEMP_NORMALIZER_COEFFICIENT", 0.05)
 ])

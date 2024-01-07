@@ -1,3 +1,5 @@
+from .rl_config import NORMALIZER_COEFFICIENTS as NORM
+
 class RL_Agent():
     
     def initialize_state_action(self):
@@ -16,9 +18,25 @@ class RL_Agent():
         if not core_index in self.last_state_per_core:
             return None
 
-        return self.last_state_per_core[core_index]
+        res = self.last_state_per_core[core_index]
+        return res
     
-    # def get_normalized_state_of_core(self, core_index):
+    def get_normalized_state_of_core(self, core_index):
+        if not core_index in self.last_state_per_core:
+            return None
+
+        res = self.last_state_per_core[core_index].copy()
+
+        for key in res:
+            if "FREQ" in key:
+                res[key] -= NORM["FREQ_MEAN"]
+                res[key] *= NORM["FREQ_NORMALIZER_COEFFICIENT"]
+            elif "TEMP" in key:
+                res[key] -= NORM["TEMP_MEAN"]
+                res[key] *= NORM["TEMP_NORMALIZER_COEFFICIENT"]
+
+        return res
+        
     #     if self.last_state_per_core[core_index] is None:
     #         return None
         

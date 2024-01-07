@@ -5,11 +5,11 @@ from matplotlib import pyplot as plt
 from pathlib import Path
 import json
 
-AGENTS_PATH = Path("../agents")
+AGENTS_PATH = Path(__file__).resolve().parent.parent / "agents"
 AGENT_STATS_FILE = "agent_running_stats.json"
 AGENT_PLOTS = "Plots"
 
-def graph_training_q_losses(agent):
+def graph_training_q_losses(agent, save_path):
     agent_running_stats_path = AGENTS_PATH / agent / AGENT_STATS_FILE
     with open(agent_running_stats_path) as handle:
         stats = json.load(handle)
@@ -22,7 +22,10 @@ def graph_training_q_losses(agent):
     fig, ax = plt.subplots()
     fig.tight_layout()
     ax.bar(x, y)
-    fig.savefig(AGENTS_PATH, agent, AGENT_PLOTS, "Training-Q-Loss")
+    save_path.mkdir(parents=True, exist_ok=True)
+    fig.savefig(save_path / "Traininig-Q-Loss.png")
 
 if __name__ == "__main__":
-    graph_training_q_losses("testing_agent_1")
+    agent = "testing_agent"
+    save_path = AGENTS_PATH / agent / AGENT_PLOTS
+    graph_training_q_losses(agent, save_path)

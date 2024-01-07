@@ -1,3 +1,5 @@
+cpus: [0, 4]
+training_runs: 100
 benchmarks:
   parsec:
     - blackscholes

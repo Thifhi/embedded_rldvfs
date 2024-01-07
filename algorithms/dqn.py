@@ -77,27 +77,23 @@ class DQNAgent(RL_Agent):
         self.policy_net.load_state_dict(torch.load(load_path))
         self.target_net.load_state_dict(torch.load(load_path))
         
+    # Filter according to RL config 
     def filter_state(self, core_state, should_print_state=False):
         if core_state == None:
             return None
         ret = list(core_state.values())
         return ret
-        # if (should_print_state):
-        #     for item in self.config["STATE_ITEMS"]:
-        #         print_state += item + ": " + "{:.3f}".format(core_state[item]) + ", "
-        #     print(print_state[:-2])
-        # return [core_state[item] for item in self.config["STATE_ITEMS"]]
 
     def act(self, raw_state):
         dvfs = {}
 
         for core in [0, 4]:
-            last_state = self.get_state_of_core(core)
+            last_state = self.get_normalized_state_of_core(core)
             last_state = self.filter_state(last_state)
             last_action = self.get_action_of_core(core)
             
             self.update_state_of_core(core, raw_state)
-            current_state = self.get_state_of_core(core)
+            current_state = self.get_normalized_state_of_core(core)
             current_state = self.filter_state(current_state, True)
             # We calculate reward also in test to have a metric
             has_reward = False
@@ -113,7 +109,7 @@ class DQNAgent(RL_Agent):
                     self.learn()
 
             else:
-                last_state = self.get_state_of_core(core)
+                last_state = self.get_normalized_state_of_core(core)
                 current_state = self.filter_state(last_state)
 
             action = self.get_action(current_state, epsilon_greedy=self.train)
@@ -129,7 +125,7 @@ class DQNAgent(RL_Agent):
         # Normalize temperature to constraint
         normalized_temperature = (state["CPU_TEMP"] - self.config["TEMPERATURE_CONSTRAINT"])
 
-        reward_0 = self.config["K_Frequency"] * state[f"CPU-Freq-{core_index}"]
+        reward_0 = self.config["K_Frequency"] * state[f"CPU-FREQ-{core_index}"]
         reward_1 = (-1) * self.config["K_Temperature"] * max(0, normalized_temperature)
         reward = reward_0 + reward_1
 

@@ -46,7 +46,7 @@ def main():
 
     mgr = BenchmarkManager(cfg)
     
-    dvfs_controller = DVFSController([0, 4])
+    dvfs_controller = DVFSController(cfg["cpus"])
     temperature_reader = TemperatureReader()
     
     agent = DQNAgent(dvfs_controller.available_cpu_frequencies)
@@ -58,7 +58,7 @@ def main():
             dvfs_controller.set_cpu_frequency(cpu, dvfs)
         return mgr.poll_running()
 
-    for i in range(10):
+    for i in range(cfg["training_runs"]):
         mgr.run_benchmarks()
         agent.start_run(True)
         run_count = agent.get_run_count()
